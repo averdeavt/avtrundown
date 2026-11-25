@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Rundown</title>
-<script>try{var t=localStorage.getItem('rd.theme');if(t)document.documentElement.setAttribute('data-theme',t)}catch(e){}</script>
+<script>try{var d=document.documentElement,t=localStorage.getItem('rd.theme');if(t)d.setAttribute('data-theme',t);var m=parseInt(localStorage.getItem('rd.dim'),10);if(m>=15&&m<100)d.style.setProperty('--dimA',(1-m/100).toFixed(2));if(localStorage.getItem('rd.red')==='1')d.setAttribute('data-red','1');}catch(e){}</script>
 <style>
 :root{color-scheme:light;--bg:#f6f6f8;--fg:#1d1d1f;--mut:#6b6b73;--line:#dcdce2;--card:#fff;--card2:#e0e7f7;--acc:#2f6fed;--accbg:#e8f0ff;--warn:#d33;--ok:#1f9d55}
 @media (prefers-color-scheme:dark){:root:not([data-theme=light]){--bg:#131316;--fg:#ececf0;--mut:#9a9aa5;--line:#2c2c33;--card:#1c1c21;--card2:#262a38;--acc:#6b9bff;--accbg:#1d2a45;--warn:#ff6b6b;--ok:#4cc38a;color-scheme:dark}}
@@ -115,9 +115,14 @@ body.editing .edit .acts{display:flex}
   .tools{margin-top:0}
   .el{font-size:17px}.tile.live .el{font-size:22px}
 }
+#dim{position:fixed;inset:0;z-index:99999;pointer-events:none;background:#000;opacity:var(--dimA,0)}
+#redov{position:fixed;inset:0;z-index:99998;pointer-events:none;background:#ff2000;mix-blend-mode:multiply;display:none}
+html[data-red] #redov{display:block}
+input[type=range]{accent-color:var(--acc)}
 </style>
 </head>
 <body>
+<div id="dim"></div><div id="redov"></div>
 <div id="top">
   <div class="row1">
     <h1 id="title">Rundown</h1>
@@ -131,7 +136,7 @@ body.editing .edit .acts{display:flex}
     <button id="impBtn" hidden title="Du kan også slippe en Excel-fil rett på siden">Importer Excel</button>
     <button id="newBtn" class="primary" hidden>+ Ny rad</button>
     <button id="shareBtn" hidden>Del / QR</button>
-    <button id="themeBtn" title="Utseende: Auto, Mørk eller Lys">Auto</button>
+    <button id="themeBtn" title="Mørk modus, lysstyrke og bakscene-lys">Utseende</button>
     <button id="nameBtn">Logg på</button>
     <button id="admBtn">Produsent</button>
   </div>
@@ -369,9 +374,30 @@ async function importFile(f){
 }
 
 /* ---------- utseende ---------- */
-function themeLabel(){const t=localStorage.getItem("rd.theme");$("#themeBtn").textContent=t==="dark"?"🌙 Mørk":t==="light"?"☀ Lys":"Auto";}
-$("#themeBtn").addEventListener("click",()=>{const t=localStorage.getItem("rd.theme");const n=!t?"dark":t==="dark"?"light":"";try{if(n)localStorage.setItem("rd.theme",n);else localStorage.removeItem("rd.theme");}catch(e){}if(n)document.documentElement.setAttribute("data-theme",n);else document.documentElement.removeAttribute("data-theme");themeLabel();});
-themeLabel();
+const rootEl=document.documentElement;
+function getDim(){const m=parseInt(localStorage.getItem("rd.dim"),10);return m>=15&&m<=100?m:100;}
+function applyLook(){
+  const th=localStorage.getItem("rd.theme");
+  if(th)rootEl.setAttribute("data-theme",th);else rootEl.removeAttribute("data-theme");
+  rootEl.style.setProperty("--dimA",(1-getDim()/100).toFixed(2));
+  if(localStorage.getItem("rd.red")==="1")rootEl.setAttribute("data-red","1");else rootEl.removeAttribute("data-red");
+}
+function setPref(k,v){try{if(v===null||v===undefined||v==="")localStorage.removeItem(k);else localStorage.setItem(k,v);}catch(e){}applyLook();}
+function lookPanel(){
+  const th=localStorage.getItem("rd.theme")||"auto";
+  const seg=(val,label)=>h("button",{class:th===val?"primary":"",onclick:()=>{setPref("rd.theme",val==="auto"?null:val);lookPanel();}},label);
+  const val=h("b",null,getDim()+" %");
+  const sl=h("input",{type:"range",min:15,max:100,step:5,value:getDim(),style:"width:100%;padding:0",oninput:e=>{val.textContent=e.target.value+" %";setPref("rd.dim",e.target.value==="100"?null:e.target.value);}});
+  const red=h("input",{type:"checkbox",checked:localStorage.getItem("rd.red")==="1",style:"width:auto",onchange:e=>setPref("rd.red",e.target.checked?"1":null)});
+  showPanel(h("h3",null,"Utseende"),
+    h("div",{class:"r"},seg("auto","Auto"),seg("dark","🌙 Mørk"),seg("light","☀ Lys")),
+    h("div",{style:"margin-top:16px"},h("div",{style:"display:flex;justify-content:space-between"},"Lysstyrke",val),sl),
+    h("label",{style:"display:flex;gap:8px;align-items:center;margin-top:14px"},red,"Rødt bakscene-lys (blender mindre)"),
+    h("div",{class:"hint",style:"margin-top:8px"},"Gjelder bare denne enheten og huskes til neste gang."),
+    h("div",{class:"r"},h("button",{onclick:()=>{setPref("rd.dim",null);setPref("rd.red",null);setPref("rd.theme",null);lookPanel();}},"Nullstill"),h("button",{class:"primary",onclick:closePanel},"Lukk")));
+}
+$("#themeBtn").addEventListener("click",lookPanel);
+applyLook();
 
 /* ---------- start ---------- */
 (async()=>{
