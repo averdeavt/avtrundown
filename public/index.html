@@ -5,8 +5,8 @@
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Rundown</title>
 <style>
-:root{--bg:#f6f6f8;--fg:#1d1d1f;--mut:#6b6b73;--line:#dcdce2;--card:#fff;--acc:#2f6fed;--accbg:#e8f0ff;--warn:#d33;--ok:#1f9d55}
-@media (prefers-color-scheme:dark){:root{--bg:#131316;--fg:#ececf0;--mut:#9a9aa5;--line:#2c2c33;--card:#1c1c21;--acc:#6b9bff;--accbg:#1d2a45;--warn:#ff6b6b;--ok:#4cc38a}}
+:root{--bg:#f6f6f8;--fg:#1d1d1f;--mut:#6b6b73;--line:#dcdce2;--card:#fff;--card2:#e0e7f7;--acc:#2f6fed;--accbg:#e8f0ff;--warn:#d33;--ok:#1f9d55}
+@media (prefers-color-scheme:dark){:root{--bg:#131316;--fg:#ececf0;--mut:#9a9aa5;--line:#2c2c33;--card:#1c1c21;--card2:#262a38;--acc:#6b9bff;--accbg:#1d2a45;--warn:#ff6b6b;--ok:#4cc38a}}
 *{box-sizing:border-box}
 html{-webkit-text-size-adjust:100%}
 body{margin:0;background:var(--bg);color:var(--fg);font:15px/1.4 system-ui,-apple-system,"Segoe UI",sans-serif}
@@ -41,9 +41,10 @@ textarea{resize:vertical;min-height:38px}
 .pn .r{display:flex;gap:8px;flex-wrap:wrap;margin-top:10px;align-items:center}
 .pn table{border-collapse:collapse;width:100%;font-size:13px}.pn td,.pn th{border-bottom:1px solid var(--line);padding:4px 6px;text-align:left}
 .hint{font-size:12px;color:var(--mut)}
-#grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(310px,1fr));gap:14px;padding:16px 16px 130px;align-items:start}
+#grid{display:flex;flex-direction:column;gap:12px;max-width:920px;margin:0 auto;padding:16px 16px 130px}
 .tile{position:relative;border:1px solid var(--line);background:var(--card);border-radius:16px;padding:12px 14px;transition:transform .25s,box-shadow .25s,opacity .25s}
-.tile.live{transform:scale(1.05);border:2px solid var(--acc);box-shadow:0 10px 30px rgba(47,111,237,.35);z-index:2}
+.tile:nth-child(even){background:var(--card2)}
+.tile.live{background:var(--accbg)!important;transform:scale(1.04);border:2px solid var(--acc);box-shadow:0 10px 30px rgba(47,111,237,.35);z-index:2}
 .tile.live .el{font-size:25px}
 .tile.done:not(.live){opacity:.5}
 .tile.next:not(.live){border-style:dashed;border-color:var(--acc)}
@@ -66,10 +67,10 @@ textarea{resize:vertical;min-height:38px}
 .empty{padding:40px 16px;color:var(--mut)}
 #dock{position:fixed;left:0;right:0;bottom:0;z-index:30;display:none;gap:10px;padding:10px 12px calc(10px + env(safe-area-inset-bottom));background:var(--bg);border-top:1px solid var(--line)}
 .isadm #dock.on{display:flex}
-#dock button{flex:1;min-height:52px;font-size:18px;font-weight:600}
+#dock button{flex:1;min-height:52px;font-size:18px;font-weight:600;white-space:nowrap;padding:8px 6px}
 #dock #goNext{flex:2}
 @media (max-width:640px){
-  #grid{grid-template-columns:1fr;padding:10px 8px 130px;gap:10px}
+  #grid{padding:10px 8px 130px;gap:10px}
   .tile.live{transform:none;border-width:3px}
   .row1{padding:6px 10px;gap:4px 14px}.livebar{padding:6px 10px 8px;gap:6px 12px}
   .row1 h1{font-size:17px}.row1 .hm{display:none}
@@ -90,6 +91,10 @@ textarea{resize:vertical;min-height:38px}
     <div class="stat">Klokka<b id="clock">–</b></div>
     <div class="sp"></div>
     <span class="conn" id="conn">● live</span>
+    <button id="editBtn" hidden>Rediger</button>
+    <button id="impBtn" hidden title="Du kan også slippe en Excel-fil rett på siden">Importer Excel</button>
+    <button id="newBtn" class="primary" hidden>+ Ny rad</button>
+    <button id="shareBtn" hidden>Del / QR</button>
     <button id="nameBtn">Logg på</button>
     <button id="admBtn">Produsent</button>
   </div>
@@ -178,10 +183,14 @@ function renderAll(){
   const t=$("#title");
   if(me.admin&&editMode){let i=t.querySelector("input");if(!i){t.textContent="";i=h("input",{onchange:e=>mutate(d=>{d.title=e.target.value;})});t.append(i);}setIf(i,S.data.title||"");}
   else if(t.firstChild&&t.firstChild.nodeType!==3||t.textContent!==S.data.title)t.textContent=S.data.title||"Rundown";
-  $("#startV").textContent=S.data.start||"19:00";
+  const sv=$("#startV");
+  if(me.admin&&editMode){let i=sv.querySelector("input");if(!i){sv.textContent="";i=h("input",{type:"time",style:"width:auto;font-size:14px",onchange:e=>e.target.value&&mutate(d=>{d.start=e.target.value;})});sv.append(i);}setIf(i,S.data.start||"19:00");}
+  else{if(sv.querySelector("input"))sv.textContent="";if(sv.textContent!==(S.data.start||"19:00"))sv.textContent=S.data.start||"19:00";}
   $("#dock").classList.toggle("on",me.admin&&!editMode);
   $("#nameBtn").textContent=me.name?me.name:"Logg på";
-  $("#admBtn").textContent=me.admin?"Produsent ▾":"Produsent";
+  $("#editBtn").hidden=!me.admin;$("#editBtn").textContent=editMode?"Ferdig med redigering":"Rediger";$("#editBtn").className=editMode?"primary":"";
+  $("#impBtn").hidden=!me.admin;$("#shareBtn").hidden=!me.admin;$("#newBtn").hidden=!(me.admin&&editMode);
+  $("#admBtn").hidden=me.admin&&me.local;$("#admBtn").textContent=me.admin?"Logg ut":"Produsent";
   const cues=S.data.cues;let t0=startSec();const base=t0;
   const liveIdx=cues.findIndex(c=>c.id===S.live.id);
   const frag=[];const seen=new Set();
@@ -207,7 +216,7 @@ function renderAll(){
     const keep=document.activeElement;grid.replaceChildren(...frag);
     if(keep&&keep.focus&&document.body.contains(keep)){try{keep.focus();}catch(e){}}
   }
-  if(!cues.length){if(!grid.querySelector(".empty"))grid.append(h("div",{class:"empty"},"Ingen rader ennå."+(me.admin?" Velg Produsent → Rediger → Ny rad, eller Importer Excel.":"")));}
+  if(!cues.length){if(!grid.querySelector(".empty"))grid.append(h("div",{class:"empty"},"Ingen rader ennå.",me.admin?h("div",{style:"margin-top:10px"},h("button",{class:"primary",onclick:()=>$("#file").click()},"Importer Excel")," ",h("button",{onclick:()=>{editMode=true;mutate(d=>{d.cues.push(newCue());});}},"+ Legg til rad")):null));}
   else{const e=grid.querySelector(".empty");if(e)e.remove();}
   $("#endV").textContent=cues.length?fmtClock(t0):"–";
   $("#totV").textContent=cues.length?fmtDur(t0-base):"–";
@@ -252,7 +261,7 @@ function namePanel(){
 }
 $("#nameBtn").addEventListener("click",namePanel);
 
-async function refreshMe(){try{me.admin=(await api("/api/me")).admin;}catch(e){me.admin=false;}renderAll();}
+async function refreshMe(){try{const r=await api("/api/me");me.admin=r.admin;me.local=r.local;}catch(e){me.admin=false;me.local=false;}renderAll();}
 function pinPanel(){
   const i=h("input",{type:"password",inputMode:"numeric",placeholder:"Produsentkode"});
   const msg=h("div",{class:"hint"});
@@ -268,18 +277,12 @@ async function sharePanel(){
   try{const q=qrcode(0,"M");q.addData(url);q.make();box.innerHTML=q.createSvgTag(5,2);}catch(e){}
   showPanel(h("h3",null,"Del med andre"),h("div",null,"Andre på samme nett åpner:"),h("div",{style:"font-size:20px;font-weight:700;margin:6px 0"},info.urls.length?info.urls.join("   "):"(ingen nettverksadresse funnet)"),box,h("div",{class:"hint",style:"margin-top:8px"},info.pin?"Produsentkode for andre enheter: "+info.pin:""),h("div",{class:"r"},h("button",{onclick:closePanel},"Lukk")));
 }
-function admMenu(){
-  if(!me.admin)return pinPanel();
-  showPanel(h("h3",null,"Produsent"),h("div",{class:"r"},
-    h("button",{class:editMode?"primary":"",onclick:()=>{editMode=!editMode;closePanel();renderAll();}},editMode?"Ferdig med redigering":"Rediger"),
-    editMode?h("button",{onclick:()=>{closePanel();mutate(d=>{d.cues.push({id:"c"+Date.now().toString(36),el:"Ny rad",who:"",dur:60,status:"Ikke startet",note:""});});setTimeout(()=>{const l=[...tiles.values()].pop();if(l)l.scrollIntoView({block:"center"});},50);}},"+ Ny rad"):null,
-    editMode?h("button",{onclick:()=>{closePanel();$("#file").click();}},"Importer Excel"):null,
-    editMode?h("label",{class:"hint",style:"display:flex;gap:6px;align-items:center"},"Start",h("input",{type:"time",value:S.data.start||"19:00",style:"width:auto",onchange:e=>e.target.value&&mutate(d=>{d.start=e.target.value;})})):null,
-    h("button",{onclick:sharePanel},"Del / QR"),
-    h("button",{onclick:()=>{localStorage.removeItem("rd.tok");refreshMe();closePanel();}},"Logg ut"),
-    h("button",{onclick:closePanel},"Lukk")));
-}
-$("#admBtn").addEventListener("click",admMenu);
+const newCue=()=>({id:"c"+Date.now().toString(36),el:"Ny rad",who:"",dur:60,status:"Ikke startet",note:""});
+$("#admBtn").addEventListener("click",()=>{if(!me.admin)return pinPanel();localStorage.removeItem("rd.tok");editMode=false;refreshMe();});
+$("#editBtn").addEventListener("click",()=>{editMode=!editMode;renderAll();});
+$("#impBtn").addEventListener("click",()=>$("#file").click());
+$("#newBtn").addEventListener("click",()=>{mutate(d=>{d.cues.push(newCue());});setTimeout(()=>{const l=[...tiles.values()].pop();if(l)l.scrollIntoView({block:"center"});},50);});
+$("#shareBtn").addEventListener("click",sharePanel);
 
 /* ---------- produsent-styring ---------- */
 $("#goNext").addEventListener("click",()=>liveAct({action:"next"}));
@@ -293,8 +296,10 @@ document.addEventListener("keydown",e=>{
 
 /* ---------- Excel-import ---------- */
 const FIELDS={el:/^(element|tittel|navn|innhold|beskrivelse|aktivitet|cue|title|name|item)/i,dur:/^(varighet|duration|lengde|dur)/i,who:/^(ansvarlig|ansvar|ansv|person|who)/i,status:/^status/i,note:/^(notat|notater|kommentar|merknad|note|notes|comment)/i};
-$("#file").addEventListener("change",async ev=>{
-  const f=ev.target.files[0];ev.target.value="";if(!f)return;
+$("#file").addEventListener("change",ev=>{const f=ev.target.files[0];ev.target.value="";if(f)importFile(f);});
+addEventListener("dragover",e=>{if(me.admin)e.preventDefault();});
+addEventListener("drop",e=>{if(!me.admin)return;e.preventDefault();const f=e.dataTransfer.files[0];if(f)importFile(f);});
+async function importFile(f){
   try{
     const wb=XLSX.read(await f.arrayBuffer(),{type:"array"});
     const aoa=XLSX.utils.sheet_to_json(wb.Sheets[wb.SheetNames[0]],{header:1,raw:false,defval:""});
@@ -317,7 +322,7 @@ $("#file").addEventListener("change",async ev=>{
       h("table",null,h("thead",null,h("tr",null,["Element","Varighet","Ansvarlig","Status","Notat"].map(x=>h("th",null,x)))),h("tbody",null,rows.slice(0,6).map(r=>h("tr",null,h("td",null,r.el),h("td",null,fmtDur(r.dur)),h("td",null,r.who),h("td",null,r.status),h("td",null,r.note))))),
       h("div",{class:"r"},h("button",{class:"primary",onclick:()=>apply("replace")},"Erstatt rundownen"),h("button",{onclick:()=>apply("append")},"Legg til nederst"),h("button",{onclick:closePanel},"Avbryt")));
   }catch(e){showPanel(h("h3",null,"Kunne ikke lese filen"),h("div",{class:"hint"},e.message||String(e)),h("div",{class:"r"},h("button",{onclick:closePanel},"Lukk")));}
-});
+}
 
 /* ---------- start ---------- */
 (async()=>{

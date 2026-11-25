@@ -9,8 +9,8 @@ Rundown (run of show) som kjører som en liten server på eget nett. Ingen skytj
 - Andre følger live automatisk, kan pause (også automatisk når de skriver notat) og hoppe tilbake til live
 - Egne, private notater per cue. Innlogging med navn (ikke passord)
 - Redigering for produsent: rader, rekkefølge, starttid. Starttider regnes ut fra varigheter
-- Import fra Excel (.xlsx/.xls) og .csv. Kolonner: Element (eller Tittel/Navn), Varighet, Ansvarlig, Status, Notat
-- QR-kode og adresse for å koble til fra andre enheter (Produsent → Del / QR)
+- Import fra Excel (.xlsx/.xls) og .csv, med knappen Importer Excel eller ved å slippe filen på siden. Kolonner: Element (eller Tittel/Navn), Varighet, Ansvarlig, Status, Notat
+- QR-kode og adresse for å koble til fra andre enheter (knappen Del / QR)
 
 ## Kjøre fra kildekode
 Krever Node 18 eller nyere.
