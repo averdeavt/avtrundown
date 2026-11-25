@@ -8,6 +8,8 @@ Rundown (run of show) som kjører som en liten server på eget nett. Ingen skytj
 - Produsent: Neste / Forrige / Stopp / Hopp hit (piltaster og mellomrom virker også)
 - Andre følger live automatisk, kan pause (også automatisk når de skriver notat) og hoppe tilbake til live
 - Egne, private notater per cue. Innlogging med navn (ikke passord)
+- Alle brukere kan redigere en enkelt cue med knappen Rediger på cuen (bevisst valg, så det ikke skjer ved uhell). Bare produsenten kan legge til, slette og flytte rader
+- Mørk modus (Auto/Mørk/Lys)
 - Redigering for produsent: rader, rekkefølge, starttid. Starttider regnes ut fra varigheter
 - Import fra Excel (.xlsx/.xls) og .csv, med knappen Importer Excel eller ved å slippe filen på siden. Kolonner: Element (eller Tittel/Navn), Varighet, Ansvarlig, Status, Notat
 - QR-kode og adresse for å koble til fra andre enheter (knappen Del / QR)

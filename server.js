@@ -167,6 +167,16 @@ const server = http.createServer(async (req, res) => {
       save(f, d);
       return send(res, 200, { ok: true });
     }
+    if (req.method === 'PATCH' && p === '/api/cue') {
+      const b = await readBody(req);
+      const c = store.cues.find(x => x.id === b.id);
+      if (!c) return send(res, 404, { error: 'cue finnes ikke' });
+      const merged = { ...c };
+      for (const k of ['el', 'who', 'dur', 'status', 'note']) if (b.patch && k in b.patch) merged[k] = b.patch[k];
+      Object.assign(c, cleanCues([merged])[0], { id: c.id });
+      persist(); broadcast();
+      return send(res, 200, { ok: true });
+    }
     send(res, 404, { error: 'ikke funnet' });
   } catch (e) {
     try { send(res, 400, { error: String(e.message || e) }); } catch (e2) { /* ignorer */ }
