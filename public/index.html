@@ -1,0 +1,332 @@
+<!DOCTYPE html>
+<html lang="nb">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Rundown</title>
+<style>
+:root{--bg:#f6f6f8;--fg:#1d1d1f;--mut:#6b6b73;--line:#dcdce2;--card:#fff;--acc:#2f6fed;--accbg:#e8f0ff;--warn:#d33;--ok:#1f9d55}
+@media (prefers-color-scheme:dark){:root{--bg:#131316;--fg:#ececf0;--mut:#9a9aa5;--line:#2c2c33;--card:#1c1c21;--acc:#6b9bff;--accbg:#1d2a45;--warn:#ff6b6b;--ok:#4cc38a}}
+*{box-sizing:border-box}
+html{-webkit-text-size-adjust:100%}
+body{margin:0;background:var(--bg);color:var(--fg);font:15px/1.4 system-ui,-apple-system,"Segoe UI",sans-serif}
+button,input,textarea,select{font:inherit;color:inherit}
+button{padding:8px 14px;border:1px solid var(--line);background:var(--card);border-radius:10px;cursor:pointer;min-height:38px}
+button:hover{border-color:var(--acc)}
+button.primary{background:var(--acc);border-color:var(--acc);color:#fff}
+button:disabled{opacity:.45;cursor:default}
+input,textarea,select{width:100%;background:var(--card);border:1px solid var(--line);border-radius:8px;padding:6px 8px}
+textarea{resize:vertical;min-height:38px}
+#top{position:sticky;top:0;z-index:20;background:var(--bg);border-bottom:1px solid var(--line)}
+.row1{display:flex;flex-wrap:wrap;gap:8px 20px;align-items:center;padding:10px 16px}
+.row1 h1{font-size:20px;margin:0}
+.row1 h1 input{font-size:20px;font-weight:600;width:16em;max-width:100%}
+.stat{display:flex;flex-direction:column;font-size:11px;color:var(--mut)}
+.stat b{font-size:16px;color:var(--fg);font-variant-numeric:tabular-nums}
+.sp{flex:1}
+.conn{font-size:12px;color:var(--ok)}.conn.off{color:var(--warn)}
+.livebar{display:flex;flex-wrap:wrap;gap:8px 16px;align-items:center;padding:8px 16px 10px;background:var(--accbg);border-top:1px solid var(--line)}
+.livebar .now{flex:1;min-width:200px}
+.livebar .lbl{font-size:11px;color:var(--mut);text-transform:uppercase;letter-spacing:.05em}
+.livebar .nm{font-size:20px;font-weight:700;line-height:1.2}
+.livebar .nx{font-size:13px;color:var(--mut)}
+.livebar .tm{font-size:28px;font-weight:700;font-variant-numeric:tabular-nums}
+.livebar .tm.over{color:var(--warn)}
+.bar{height:5px;background:var(--line);border-radius:3px;overflow:hidden;width:100%;flex-basis:100%}
+.bar i{display:block;height:100%;width:0;background:var(--acc)}
+#follow.paused{background:#ffb020;border-color:#ffb020;color:#000}
+#panel:not(:empty){position:fixed;inset:0;z-index:50;background:rgba(0,0,0,.45);display:flex;align-items:flex-start;justify-content:center;padding:10vh 12px 12px;overflow:auto}
+.pn{width:100%;border:1px solid var(--line);background:var(--card);border-radius:14px;padding:16px;max-width:760px}
+.pn h3{margin:0 0 8px}
+.pn .r{display:flex;gap:8px;flex-wrap:wrap;margin-top:10px;align-items:center}
+.pn table{border-collapse:collapse;width:100%;font-size:13px}.pn td,.pn th{border-bottom:1px solid var(--line);padding:4px 6px;text-align:left}
+.hint{font-size:12px;color:var(--mut)}
+#grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(310px,1fr));gap:14px;padding:16px 16px 130px;align-items:start}
+.tile{position:relative;border:1px solid var(--line);background:var(--card);border-radius:16px;padding:12px 14px;transition:transform .25s,box-shadow .25s,opacity .25s}
+.tile.live{transform:scale(1.05);border:2px solid var(--acc);box-shadow:0 10px 30px rgba(47,111,237,.35);z-index:2}
+.tile.live .el{font-size:25px}
+.tile.done:not(.live){opacity:.5}
+.tile.next:not(.live){border-style:dashed;border-color:var(--acc)}
+.hd{display:flex;gap:10px;align-items:center;flex-wrap:wrap;font-size:13px;color:var(--mut)}
+.num{font-weight:700;color:var(--fg)}
+.t,.d{font-variant-numeric:tabular-nums}
+.el{font-size:18px;font-weight:650;margin:6px 0 2px;overflow-wrap:anywhere}
+.who{font-size:13px;color:var(--mut)}
+.note{white-space:pre-wrap;margin-top:6px;overflow-wrap:anywhere}
+.pill{display:inline-block;padding:1px 9px;border-radius:999px;font-size:12px;white-space:nowrap;margin-left:auto}
+.s0{background:#e3e3e8;color:#333}.s1{background:#cfe0ff;color:#14336e}.s2{background:#ffe2a8;color:#5a3c00}.s3{background:#c8efd2;color:#14532d}.s4{background:#ffc9c9;color:#7a1414}
+.mine{margin-top:10px}.mine textarea{border-style:dashed;min-height:36px}
+.mine .sv{font-size:11px;color:var(--mut);height:14px}
+.edit{display:none;margin-top:6px}
+.editing .edit{display:block}.editing .v{display:none}
+.edit .g{display:grid;grid-template-columns:1fr 1fr;gap:6px;margin-top:6px}
+.edit .acts{display:flex;gap:6px;margin-top:8px}
+.jump{display:none;margin-top:8px}
+.isadm:not(.editing) .jump{display:block}
+.empty{padding:40px 16px;color:var(--mut)}
+#dock{position:fixed;left:0;right:0;bottom:0;z-index:30;display:none;gap:10px;padding:10px 12px calc(10px + env(safe-area-inset-bottom));background:var(--bg);border-top:1px solid var(--line)}
+.isadm #dock.on{display:flex}
+#dock button{flex:1;min-height:52px;font-size:18px;font-weight:600}
+#dock #goNext{flex:2}
+@media (max-width:640px){
+  #grid{grid-template-columns:1fr;padding:10px 8px 130px;gap:10px}
+  .tile.live{transform:none;border-width:3px}
+  .row1{padding:6px 10px;gap:4px 14px}.livebar{padding:6px 10px 8px;gap:6px 12px}
+  .row1 h1{font-size:17px}.row1 .hm{display:none}
+  .row1 button{padding:3px 10px;min-height:32px;font-size:14px}
+  .stat b{font-size:14px}
+  .livebar .tm{font-size:24px}.livebar .nm{font-size:18px}
+  .livebar button{padding:3px 10px;min-height:32px;font-size:14px}
+}
+</style>
+</head>
+<body>
+<div id="top">
+  <div class="row1">
+    <h1 id="title">Rundown</h1>
+    <div class="stat">Start<b id="startV">–</b></div>
+    <div class="stat">Slutt<b id="endV">–</b></div>
+    <div class="stat hm">Total<b id="totV">–</b></div>
+    <div class="stat">Klokka<b id="clock">–</b></div>
+    <div class="sp"></div>
+    <span class="conn" id="conn">● live</span>
+    <button id="nameBtn">Logg på</button>
+    <button id="admBtn">Produsent</button>
+  </div>
+  <div class="livebar" id="livebar">
+    <div class="now"><div class="lbl">Nå</div><div class="nm" id="liveEl">Ikke startet</div><div class="nx" id="nextEl"></div></div>
+    <div class="tm" id="liveTm"></div>
+    <button id="follow">Følger live · Pause</button>
+    <div class="bar"><i id="liveBar"></i></div>
+  </div>
+</div>
+<div id="panel"></div>
+<div id="grid"></div>
+<div id="dock"><button id="goPrev">◀ Forrige</button><button id="goNext" class="primary">Neste ▶</button><button id="goStop">■ Stopp</button></div>
+<input type="file" id="file" accept=".xlsx,.xls,.csv" hidden>
+<script src="/xlsx.js"></script>
+<script src="/qr.js"></script>
+<script>
+const ST=["Ikke startet","Klar","Pågår","Ferdig","Problem"];
+const $=s=>document.querySelector(s);
+function h(tag,props,...kids){const e=document.createElement(tag);for(const k in(props||{})){const v=props[k];if(k==="class")e.className=v;else if(k.startsWith("on"))e.addEventListener(k.slice(2),v);else if(v!==false&&v!=null)e[k]=v;}for(const c of kids.flat()){if(c==null)continue;e.append(c.nodeType?c:document.createTextNode(String(c)));}return e;}
+const pad=n=>String(n).padStart(2,"0");
+function parseDur(s){s=String(s).trim();if(!s)return 0;const p=s.split(":").map(x=>parseInt(x,10));if(p.some(isNaN))return null;if(p.length===1)return p[0]*60;if(p.length===2)return p[0]*60+p[1];return p[0]*3600+p[1]*60+p[2];}
+function fmtDur(s){s=Math.max(0,Math.round(s));const a=Math.floor(s/3600),b=Math.floor(s%3600/60),c=s%60;return a?`${a}:${pad(b)}:${pad(c)}`:`${b}:${pad(c)}`;}
+function fmtClock(s){s=((Math.round(s)%86400)+86400)%86400;return `${pad(Math.floor(s/3600))}:${pad(Math.floor(s%3600/60))}`;}
+function startSec(){const m=/^(\d{1,2}):(\d{2})/.exec(S.data.start||"19:00");return m?(+m[1])*3600+(+m[2])*60:19*3600;}
+
+let S={data:{title:"Rundown",start:"19:00",cues:[]},live:{id:null,since:0}},off=0;
+let me={name:localStorage.getItem("rd.name")||"",admin:false};
+let follow=true,behind=false,editMode=false,dirty=false,saving=false,pending=null,saveTimer=null;
+let notes={};const tiles=new Map();
+
+const tok=()=>localStorage.getItem("rd.tok")||"";
+async function api(path,opt={}){const hd={"Content-Type":"application/json"};if(tok())hd.Authorization="Bearer "+tok();const r=await fetch(path,{...opt,headers:hd});if(!r.ok){const e=new Error(String(r.status));e.status=r.status;throw e;}return r.json();}
+
+/* ---------- live-data ---------- */
+function connect(){
+  const es=new EventSource("/events");
+  es.addEventListener("state",e=>{$("#conn").textContent="● live";$("#conn").className="conn";onState(JSON.parse(e.data));});
+  es.onerror=()=>{$("#conn").textContent="● frakoblet";$("#conn").className="conn off";};
+}
+function onState(m){
+  off=m.now-Date.now();
+  if(dirty||saving){pending=m;return;}
+  const was=S.live.id;S=m;renderAll();
+  if(m.live.id!==was){if(follow)scrollLive();else behind=true;updateFollow();}
+}
+function mutate(fn){fn(S.data);dirty=true;renderAll();clearTimeout(saveTimer);saveTimer=setTimeout(flush,400);}
+async function flush(){
+  saving=true;
+  try{await api("/api/rundown",{method:"PUT",body:JSON.stringify(S.data)});}catch(e){alert("Kunne ikke lagre. Er du produsent?");try{S=await api("/api/state");}catch(e2){}}
+  saving=false;dirty=false;
+  if(pending){const m=pending;pending=null;onState(m);}
+}
+async function liveAct(a){try{await api("/api/live",{method:"POST",body:JSON.stringify(a)});}catch(e){alert("Kunne ikke styre. Logg inn som produsent.");}}
+
+/* ---------- tegning ---------- */
+function buildTile(c){
+  const r={};
+  const el=h("article",{class:"tile","data-id":c.id});
+  r.num=h("span",{class:"num"});r.t=h("span",{class:"t"});r.d=h("span",{class:"d v"});r.pill=h("span",{class:"pill v"});
+  el.append(h("div",{class:"hd"},r.num,r.t,r.d,r.pill));
+  r.el=h("div",{class:"el v"});r.who=h("div",{class:"who v"});r.note=h("div",{class:"note v"});
+  el.append(r.el,r.who,r.note);
+  r.iEl=h("input",{placeholder:"Element",onchange:e=>edit(c.id,{el:e.target.value})});
+  r.iWho=h("input",{placeholder:"Ansvarlig",onchange:e=>edit(c.id,{who:e.target.value})});
+  r.iDur=h("input",{placeholder:"Varighet (m:ss)",onchange:e=>{const v=parseDur(e.target.value);if(v===null)return renderAll();edit(c.id,{dur:v});}});
+  r.iSt=h("select",{onchange:e=>edit(c.id,{status:e.target.value})},ST.map(x=>h("option",{value:x},x)));
+  r.iNote=h("textarea",{rows:2,placeholder:"Felles notat",onchange:e=>edit(c.id,{note:e.target.value})});
+  r.up=h("button",{title:"Opp",onclick:()=>move(c.id,-1)},"↑");r.dn=h("button",{title:"Ned",onclick:()=>move(c.id,1)},"↓");
+  r.del=h("button",{onclick:()=>{if(r.del.dataset.arm){mutate(d=>{d.cues=d.cues.filter(x=>x.id!==c.id);});}else{r.del.dataset.arm=1;r.del.textContent="Sikker?";setTimeout(()=>{r.del.dataset.arm="";r.del.textContent="Slett";},3000);}}},"Slett");
+  el.append(h("div",{class:"edit"},r.iEl,h("div",{class:"g"},r.iWho,r.iDur),h("div",{class:"g"},r.iSt,h("span")),h("div",{style:"margin-top:6px"},r.iNote),h("div",{class:"acts"},r.up,r.dn,r.del)));
+  r.jump=h("button",{class:"jump",onclick:()=>liveAct({action:"goto",id:c.id})},"Hopp hit");
+  el.append(r.jump);
+  r.mine=h("textarea",{rows:1,onchange:e=>saveNote(c.id,e.target.value)});r.sv=h("div",{class:"sv"});
+  el.append(h("label",{class:"mine"},r.mine,r.sv));
+  el._r=r;return el;
+}
+function edit(id,patch){mutate(d=>{const c=d.cues.find(x=>x.id===id);if(c)Object.assign(c,patch);});}
+function move(id,dir){mutate(d=>{const i=d.cues.findIndex(x=>x.id===id),j=i+dir;if(i<0||j<0||j>=d.cues.length)return;[d.cues[i],d.cues[j]]=[d.cues[j],d.cues[i]];});}
+function setIf(inp,v){if(document.activeElement!==inp&&inp.value!==v)inp.value=v;}
+
+function renderAll(){
+  document.title=S.data.title||"Rundown";
+  document.body.classList.toggle("isadm",me.admin);
+  document.body.classList.toggle("editing",me.admin&&editMode);
+  const t=$("#title");
+  if(me.admin&&editMode){let i=t.querySelector("input");if(!i){t.textContent="";i=h("input",{onchange:e=>mutate(d=>{d.title=e.target.value;})});t.append(i);}setIf(i,S.data.title||"");}
+  else if(t.firstChild&&t.firstChild.nodeType!==3||t.textContent!==S.data.title)t.textContent=S.data.title||"Rundown";
+  $("#startV").textContent=S.data.start||"19:00";
+  $("#dock").classList.toggle("on",me.admin&&!editMode);
+  $("#nameBtn").textContent=me.name?me.name:"Logg på";
+  $("#admBtn").textContent=me.admin?"Produsent ▾":"Produsent";
+  const cues=S.data.cues;let t0=startSec();const base=t0;
+  const liveIdx=cues.findIndex(c=>c.id===S.live.id);
+  const frag=[];const seen=new Set();
+  cues.forEach((c,i)=>{
+    let el=tiles.get(c.id);if(!el){el=buildTile(c);tiles.set(c.id,el);}
+    seen.add(c.id);const r=el._r;const s=t0;t0+=c.dur||0;
+    r.num.textContent=i+1;r.t.textContent=fmtClock(s);r.d.textContent=fmtDur(c.dur||0);
+    const si=Math.max(0,ST.indexOf(c.status));r.pill.textContent=ST[si];r.pill.className="pill v s"+si;
+    r.el.textContent=c.el||"";r.who.textContent=c.who||"";r.note.textContent=c.note||"";
+    setIf(r.iEl,c.el||"");setIf(r.iWho,c.who||"");setIf(r.iDur,fmtDur(c.dur||0));setIf(r.iSt,ST[si]);setIf(r.iNote,c.note||"");
+    r.up.disabled=i===0;r.dn.disabled=i===cues.length-1;
+    el.classList.toggle("live",c.id===S.live.id);
+    el.classList.toggle("done",c.status==="Ferdig");
+    el.classList.toggle("next",liveIdx>=0&&i===liveIdx+1);
+    r.mine.disabled=!me.name;r.mine.placeholder=me.name?"Mine notater (bare for "+me.name+")":"Logg på for egne notater";
+    setIf(r.mine,notes[c.id]||"");
+    frag.push(el);
+  });
+  for(const [id,el] of tiles)if(!seen.has(id)){el.remove();tiles.delete(id);}
+  const grid=$("#grid");
+  let need=false;frag.forEach((el,i)=>{if(grid.children[i]!==el)need=true;});
+  if(need||grid.children.length!==frag.length){
+    const keep=document.activeElement;grid.replaceChildren(...frag);
+    if(keep&&keep.focus&&document.body.contains(keep)){try{keep.focus();}catch(e){}}
+  }
+  if(!cues.length){if(!grid.querySelector(".empty"))grid.append(h("div",{class:"empty"},"Ingen rader ennå."+(me.admin?" Velg Produsent → Rediger → Ny rad, eller Importer Excel.":"")));}
+  else{const e=grid.querySelector(".empty");if(e)e.remove();}
+  $("#endV").textContent=cues.length?fmtClock(t0):"–";
+  $("#totV").textContent=cues.length?fmtDur(t0-base):"–";
+  tick();
+}
+
+function tick(){
+  const d=new Date();$("#clock").textContent=`${pad(d.getHours())}:${pad(d.getMinutes())}:${pad(d.getSeconds())}`;
+  const cues=S.data.cues;const i=cues.findIndex(c=>c.id===S.live.id);
+  if(i<0){$("#liveEl").textContent=cues.length&&S.live.since?"Ferdig / stoppet":"Ikke startet";$("#nextEl").textContent=cues[0]?"Første: "+cues[0].el:"";$("#liveTm").textContent="";$("#liveBar").style.width="0";return;}
+  const c=cues[i];$("#liveEl").textContent=(i+1)+". "+c.el;
+  $("#nextEl").textContent=cues[i+1]?"Neste: "+cues[i+1].el:"Siste cue";
+  const el=(Date.now()+off-S.live.since)/1000,rem=(c.dur||0)-el;
+  const tm=$("#liveTm");tm.textContent=rem>=0?fmtDur(rem):"+"+fmtDur(-rem);tm.className="tm"+(rem<0?" over":"");
+  $("#liveBar").style.width=Math.min(100,c.dur?el/c.dur*100:0)+"%";
+}
+setInterval(tick,250);
+
+function scrollLive(){const el=tiles.get(S.live.id);if(el)el.scrollIntoView({behavior:"smooth",block:"center"});}
+function updateFollow(){const b=$("#follow");b.className=follow?"":"paused";b.textContent=follow?"Følger live · Pause":(behind?"▶ Tilbake til live (flyttet)":"▶ Tilbake til live");}
+function setFollow(v){follow=v;if(v){behind=false;scrollLive();}updateFollow();}
+$("#follow").addEventListener("click",()=>setFollow(!follow));
+document.addEventListener("focusin",e=>{if(e.target.closest&&e.target.closest(".mine"))setFollow(false);});
+
+/* ---------- notater ---------- */
+async function loadNotes(){if(!me.name){notes={};renderAll();return;}try{const r=await api("/api/notes?user="+encodeURIComponent(me.name));notes=r.notes||{};}catch(e){notes={};}renderAll();}
+async function saveNote(cue,text){
+  if(!me.name)return;const r=tiles.get(cue)&&tiles.get(cue)._r;
+  try{await api("/api/notes",{method:"PUT",body:JSON.stringify({user:me.name,cue,text})});notes[cue]=text;if(r){r.sv.textContent="lagret";setTimeout(()=>r.sv.textContent="",1500);}}
+  catch(e){if(r)r.sv.textContent="kunne ikke lagre";}
+}
+
+/* ---------- panel ---------- */
+function closePanel(){$("#panel").replaceChildren();}
+function showPanel(...kids){$("#panel").replaceChildren(h("div",{class:"pn"},...kids));}
+function namePanel(){
+  const i=h("input",{value:me.name,placeholder:"Navnet ditt",maxLength:40});
+  const go=()=>{const v=i.value.trim();me.name=v;if(v)localStorage.setItem("rd.name",v);else localStorage.removeItem("rd.name");closePanel();loadNotes();};
+  i.addEventListener("keydown",e=>{if(e.key==="Enter")go();});
+  showPanel(h("h3",null,"Hvem er du?"),h("div",{class:"hint"},"Navnet brukes bare til å holde notatene dine adskilt fra andres. Det er ikke et passord."),h("div",{style:"margin-top:8px"},i),h("div",{class:"r"},h("button",{class:"primary",onclick:go},"Fortsett"),h("button",{onclick:closePanel},"Bare se"),me.name?h("button",{onclick:()=>{i.value="";go();}},"Logg av"):null));
+  setTimeout(()=>i.focus(),50);
+}
+$("#nameBtn").addEventListener("click",namePanel);
+
+async function refreshMe(){try{me.admin=(await api("/api/me")).admin;}catch(e){me.admin=false;}renderAll();}
+function pinPanel(){
+  const i=h("input",{type:"password",inputMode:"numeric",placeholder:"Produsentkode"});
+  const msg=h("div",{class:"hint"});
+  const go=async()=>{try{const r=await api("/api/login",{method:"POST",body:JSON.stringify({pin:i.value.trim()})});localStorage.setItem("rd.tok",r.token);await refreshMe();closePanel();}catch(e){msg.textContent="Feil kode.";}};
+  i.addEventListener("keydown",e=>{if(e.key==="Enter")go();});
+  showPanel(h("h3",null,"Produsent"),h("div",{class:"hint"},"Koden står i vinduet der serveren kjører."),h("div",{style:"margin-top:8px"},i),msg,h("div",{class:"r"},h("button",{class:"primary",onclick:go},"Logg inn"),h("button",{onclick:closePanel},"Avbryt")));
+  setTimeout(()=>i.focus(),50);
+}
+async function sharePanel(){
+  let info={urls:[],pin:null};try{info=await api("/api/info");}catch(e){}
+  const url=info.urls[0]||location.origin;
+  const box=h("div",{style:"background:#fff;padding:6px;display:inline-block;border-radius:8px"});
+  try{const q=qrcode(0,"M");q.addData(url);q.make();box.innerHTML=q.createSvgTag(5,2);}catch(e){}
+  showPanel(h("h3",null,"Del med andre"),h("div",null,"Andre på samme nett åpner:"),h("div",{style:"font-size:20px;font-weight:700;margin:6px 0"},info.urls.length?info.urls.join("   "):"(ingen nettverksadresse funnet)"),box,h("div",{class:"hint",style:"margin-top:8px"},info.pin?"Produsentkode for andre enheter: "+info.pin:""),h("div",{class:"r"},h("button",{onclick:closePanel},"Lukk")));
+}
+function admMenu(){
+  if(!me.admin)return pinPanel();
+  showPanel(h("h3",null,"Produsent"),h("div",{class:"r"},
+    h("button",{class:editMode?"primary":"",onclick:()=>{editMode=!editMode;closePanel();renderAll();}},editMode?"Ferdig med redigering":"Rediger"),
+    editMode?h("button",{onclick:()=>{closePanel();mutate(d=>{d.cues.push({id:"c"+Date.now().toString(36),el:"Ny rad",who:"",dur:60,status:"Ikke startet",note:""});});setTimeout(()=>{const l=[...tiles.values()].pop();if(l)l.scrollIntoView({block:"center"});},50);}},"+ Ny rad"):null,
+    editMode?h("button",{onclick:()=>{closePanel();$("#file").click();}},"Importer Excel"):null,
+    editMode?h("label",{class:"hint",style:"display:flex;gap:6px;align-items:center"},"Start",h("input",{type:"time",value:S.data.start||"19:00",style:"width:auto",onchange:e=>e.target.value&&mutate(d=>{d.start=e.target.value;})})):null,
+    h("button",{onclick:sharePanel},"Del / QR"),
+    h("button",{onclick:()=>{localStorage.removeItem("rd.tok");refreshMe();closePanel();}},"Logg ut"),
+    h("button",{onclick:closePanel},"Lukk")));
+}
+$("#admBtn").addEventListener("click",admMenu);
+
+/* ---------- produsent-styring ---------- */
+$("#goNext").addEventListener("click",()=>liveAct({action:"next"}));
+$("#goPrev").addEventListener("click",()=>liveAct({action:"prev"}));
+$("#goStop").addEventListener("click",()=>liveAct({action:"stop"}));
+document.addEventListener("keydown",e=>{
+  if(!me.admin||editMode||/INPUT|TEXTAREA|SELECT/.test((e.target||{}).tagName||""))return;
+  if(e.key==="ArrowRight"||e.key===" "){e.preventDefault();liveAct({action:"next"});}
+  else if(e.key==="ArrowLeft"){e.preventDefault();liveAct({action:"prev"});}
+});
+
+/* ---------- Excel-import ---------- */
+const FIELDS={el:/^(element|tittel|navn|innhold|beskrivelse|aktivitet|cue|title|name|item)/i,dur:/^(varighet|duration|lengde|dur)/i,who:/^(ansvarlig|ansvar|ansv|person|who)/i,status:/^status/i,note:/^(notat|notater|kommentar|merknad|note|notes|comment)/i};
+$("#file").addEventListener("change",async ev=>{
+  const f=ev.target.files[0];ev.target.value="";if(!f)return;
+  try{
+    const wb=XLSX.read(await f.arrayBuffer(),{type:"array"});
+    const aoa=XLSX.utils.sheet_to_json(wb.Sheets[wb.SheetNames[0]],{header:1,raw:false,defval:""});
+    const hi=aoa.findIndex(r=>r.some(c=>FIELDS.el.test(String(c).trim())));
+    if(hi<0)throw new Error("Fant ingen kolonne som heter Element, Tittel eller Navn.");
+    const hdr=aoa[hi].map(c=>String(c).trim());const col={};
+    for(const k in FIELDS){const i=hdr.findIndex(c=>FIELDS[k].test(c));if(i>=0)col[k]=i;}
+    const rows=[];
+    for(const r of aoa.slice(hi+1)){
+      const el=String(r[col.el]??"").trim();if(!el)continue;
+      let dur=0;if(col.dur!==undefined){const s=String(r[col.dur]??"").trim();dur=/^\d+([.,]\d+)?$/.test(s)?Math.round(parseFloat(s.replace(",","."))*60):(parseDur(s)||0);}
+      const st=col.status!==undefined?ST.find(x=>x.toLowerCase()===String(r[col.status]).trim().toLowerCase()):null;
+      rows.push({el,dur,who:col.who!==undefined?String(r[col.who]??"").trim():"",status:st||ST[0],note:col.note!==undefined?String(r[col.note]??"").trim():""});
+    }
+    if(!rows.length)throw new Error("Fant ingen rader under overskriftene.");
+    const NM={el:"Element",dur:"Varighet",who:"Ansvarlig",status:"Status",note:"Notat"};
+    const found=Object.keys(col).map(k=>NM[k]+" ← «"+hdr[col[k]]+"»").join(", ");
+    const apply=mode=>{closePanel();const stamp=Date.now().toString(36);mutate(d=>{const add=rows.map((r,i)=>({...r,id:"i"+stamp+"_"+i}));d.cues=mode==="replace"?add:d.cues.concat(add);});};
+    showPanel(h("h3",null,"Importerer «"+f.name+"»: "+rows.length+" rader"),h("div",{class:"hint"},"Kolonner funnet: "+found+". Start regnes ut automatisk. Tall i varighet tolkes som minutter, «5:30» som minutter:sekunder."),
+      h("table",null,h("thead",null,h("tr",null,["Element","Varighet","Ansvarlig","Status","Notat"].map(x=>h("th",null,x)))),h("tbody",null,rows.slice(0,6).map(r=>h("tr",null,h("td",null,r.el),h("td",null,fmtDur(r.dur)),h("td",null,r.who),h("td",null,r.status),h("td",null,r.note))))),
+      h("div",{class:"r"},h("button",{class:"primary",onclick:()=>apply("replace")},"Erstatt rundownen"),h("button",{onclick:()=>apply("append")},"Legg til nederst"),h("button",{onclick:closePanel},"Avbryt")));
+  }catch(e){showPanel(h("h3",null,"Kunne ikke lese filen"),h("div",{class:"hint"},e.message||String(e)),h("div",{class:"r"},h("button",{onclick:closePanel},"Lukk")));}
+});
+
+/* ---------- start ---------- */
+(async()=>{
+  renderAll();updateFollow();
+  await refreshMe();
+  connect();
+  await loadNotes();
+  if(!me.name&&!sessionStorage.getItem("rd.asked")){sessionStorage.setItem("rd.asked","1");namePanel();}
+})();
+</script>
+</body>
+</html>

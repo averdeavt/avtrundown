@@ -1,0 +1,18 @@
+{
+  "name": "avtrundown",
+  "version": "0.1.0",
+  "description": "Rundown / run of show som lokal server. Ingen skytjeneste, ingen kontoer.",
+  "private": true,
+  "main": "server.js",
+  "scripts": {
+    "assets": "node build-assets.js",
+    "start": "node build-assets.js && node server.js",
+    "build:mac-arm": "node build-assets.js && bun build --compile --target=bun-darwin-arm64 ./server.js --outfile dist/rundown-darwin-arm64",
+    "build:mac-intel": "node build-assets.js && bun build --compile --target=bun-darwin-x64 ./server.js --outfile dist/rundown-darwin-x64",
+    "build:win": "node build-assets.js && bun build --compile --target=bun-windows-x64 ./server.js --outfile dist/rundown-windows-x64.exe"
+  },
+  "devDependencies": {
+    "qrcode-generator": "^2.0.4",
+    "xlsx": "0.18.5"
+  }
+}
