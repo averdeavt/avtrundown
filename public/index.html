@@ -85,6 +85,36 @@ body.editing .edit .acts{display:flex}
   .livebar .tm{font-size:24px}.livebar .nm{font-size:18px}
   .livebar button{padding:3px 10px;min-height:32px;font-size:14px}
 }
+
+/* ---- bred rad (PC), kort (nettbrett), enkelt kort (mobil) ---- */
+#grid{max-width:none;padding:16px 20px 130px}
+.tile{display:grid;grid-template-columns:270px minmax(0,1.5fr) minmax(0,1.5fr) minmax(0,1.5fr);gap:8px 18px;align-items:start}
+.tile.live{transform:none;padding:18px 20px}
+.tile.live .el{font-size:28px}
+.tile.live .num,.tile.live .t,.tile.live .d{font-size:16px;color:var(--fg)}
+.left{grid-column:1}
+.main{grid-column:2}
+.note{grid-column:3;margin-top:0}
+.note:empty{display:none}
+.mine{grid-column:4;margin-top:0}
+.edit{grid-column:1/-1;max-width:900px}
+.el{margin:0 0 2px}
+.tools{display:flex;gap:6px;align-items:center;flex-wrap:wrap;margin-top:8px}
+.isadm:not(.editing) .jump{display:inline-block;margin-top:0}
+@media (max-width:1099px){
+  .tile{grid-template-columns:150px minmax(0,1fr)}
+  .left{grid-row:1/span 2}
+  .main{grid-column:2}.note{grid-column:2}.mine{grid-column:1/-1}
+}
+@media (max-width:639px){
+  #grid{padding:10px 8px 130px;gap:10px}
+  .tile{grid-template-columns:minmax(0,1fr);padding:10px 12px;gap:6px}
+  .tile.live{padding:12px 12px}
+  .left,.main,.note,.mine,.edit{grid-column:1;grid-row:auto}
+  .left{display:flex;flex-wrap:wrap;gap:6px 12px;align-items:center;justify-content:space-between}
+  .tools{margin-top:0}
+  .el{font-size:17px}.tile.live .el{font-size:22px}
+}
 </style>
 </head>
 <body>
@@ -163,9 +193,10 @@ function buildTile(c){
   const el=h("article",{class:"tile","data-id":c.id});
   r.num=h("span",{class:"num"});r.t=h("span",{class:"t"});r.d=h("span",{class:"d v"});r.pill=h("span",{class:"pill v"});
   r.eb=h("button",{class:"ebtn",onclick:()=>toggleEdit(c.id)},"✎ Rediger");
-  el.append(h("div",{class:"hd"},r.num,r.t,r.d,h("span",{class:"rt"},r.pill,r.eb)));
+  r.jump=h("button",{class:"jump",onclick:()=>liveAct({action:"goto",id:c.id})},"Hopp hit");
+  el.append(h("div",{class:"left"},h("div",{class:"hd"},r.num,r.t,r.d),h("div",{class:"tools"},r.pill,r.eb,r.jump)));
   r.el=h("div",{class:"el v"});r.who=h("div",{class:"who v"});r.note=h("div",{class:"note v"});
-  el.append(r.el,r.who,r.note);
+  el.append(h("div",{class:"main v"},r.el,r.who),r.note);
   r.iEl=h("input",{placeholder:"Element",onchange:e=>edit(c.id,{el:e.target.value})});
   r.iWho=h("input",{placeholder:"Ansvarlig",onchange:e=>edit(c.id,{who:e.target.value})});
   r.iDur=h("input",{placeholder:"Varighet (m:ss)",onchange:e=>{const v=parseDur(e.target.value);if(v===null)return renderAll();edit(c.id,{dur:v});}});
@@ -174,8 +205,6 @@ function buildTile(c){
   r.up=h("button",{title:"Opp",onclick:()=>move(c.id,-1)},"↑");r.dn=h("button",{title:"Ned",onclick:()=>move(c.id,1)},"↓");
   r.del=h("button",{onclick:()=>{if(r.del.dataset.arm){mutate(d=>{d.cues=d.cues.filter(x=>x.id!==c.id);});}else{r.del.dataset.arm=1;r.del.textContent="Sikker?";setTimeout(()=>{r.del.dataset.arm="";r.del.textContent="Slett";},3000);}}},"Slett");
   el.append(h("div",{class:"edit"},r.iEl,h("div",{class:"g"},r.iWho,r.iDur),h("div",{class:"g"},r.iSt,h("span")),h("div",{style:"margin-top:6px"},r.iNote),h("div",{class:"acts"},r.up,r.dn,r.del)));
-  r.jump=h("button",{class:"jump",onclick:()=>liveAct({action:"goto",id:c.id})},"Hopp hit");
-  el.append(r.jump);
   r.mine=h("textarea",{rows:1,onchange:e=>saveNote(c.id,e.target.value)});r.sv=h("div",{class:"sv"});
   el.append(h("label",{class:"mine"},r.mine,r.sv));
   el._r=r;return el;
